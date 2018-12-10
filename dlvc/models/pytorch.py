@@ -2,7 +2,9 @@
 from ..model import Model
 
 import numpy as np
+import torch
 import torch.nn as nn
+import pdb
 
 class CnnClassifier(Model):
     '''
@@ -30,25 +32,34 @@ class CnnClassifier(Model):
         # do termine this, check the type of (one of the) parameters, which can be obtained via parameters() (there is an is_cuda flag).
         # you will want to initialize the optimizer and loss function here. note that pytorch's cross-entropy loss includes normalization so no softmax is required
 
-        pass
+        self._net = net
+        self._input_shape = input_shape
+        self._num_classes = num_classes
+        self._lr = lr
+        self._wd = wd
+
+        if torch.cuda.is_available():
+            net.cuda()
+            
+        print("Cuda usage: {}".format(next(net.parameters()).is_cuda))
+
+        pdb.set_trace()
 
     def input_shape(self) -> tuple:
         '''
         Returns the expected input shape as a tuple.
         '''
 
-        # TODO implement
+        return tuple(self._input_shape)
 
-        pass
 
     def output_shape(self) -> tuple:
         '''
         Returns the shape of predictions for a single sample as a tuple, which is (num_classes,).
         '''
 
-        # TODO implement
+        return tuple(self._num_classes,)
 
-        pass
 
     def train(self, data: np.ndarray, labels: np.ndarray) -> float:
         '''

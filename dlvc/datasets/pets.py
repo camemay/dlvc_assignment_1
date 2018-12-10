@@ -31,7 +31,7 @@ class PetsDataset(ClassificationDataset):
         # See the CIFAR-10 website on how to load the data files
 
         if not os.path.isdir(fdir):
-            raise ValueError
+            raise ValueError("{} is not a directory!".format(fdir))
 
         pets_dict = self.__label_index(fdir)
         
