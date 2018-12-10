@@ -1,7 +1,7 @@
 if __name__ == '__main__':
     from dlvc.datasets.pets import PetsDataset
     from dlvc.dataset import Subset
-    from dlvc.ops import chain, vectorize, type_cast, add, mul
+    from dlvc.ops import chain, vectorize, type_cast, add, mul, hwc2chw
     from dlvc.batches import BatchGenerator
     from dlvc.models.knn import KnnClassifier
     from dlvc.models.pytorch import CnnClassifier
@@ -27,9 +27,7 @@ if __name__ == '__main__':
             self.fc2 = nn.Linear(64, 2)
 
         def forward(self, x):
-
             #Computes the activation of the first convolution
-
             #Size changes from (3, 32, 32) to (18, 32, 32)
             x = F.relu(self.conv1(x))
 
@@ -61,10 +59,10 @@ if __name__ == '__main__':
     #test = PetsDataset(dataset_path, Subset.TEST)
     
     op = chain([
-            vectorize(),
             type_cast(np.float32),
             add(-127.5),
-            mul(1/127.5)
+            mul(1/127.5),
+            hwc2chw(),
         ])
 
     num_batches = 128
@@ -81,40 +79,42 @@ if __name__ == '__main__':
     clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.05, wd=0.1)
     
     for epoch in range(0,101):
-        pass
-
-
-
-    for train_set in training_bg:
-
-        best_accuracy = Accuracy()
         
-        for k in k_values:
-            print('Training k = {0}'.format(k))
-            kNN = KnnClassifier(k=k, input_dim=train_set.data[0].shape[0], num_classes=num_classes)
+        for train_set in training_bg:
+
+            # There is an ERRRROR in Train!!!! 
+            #loss = clf.train(data=train_set.data, labels=train_set.label)
+            
+            '''
+            accuracy = Accuracy()
+            
+            for k in k_values:
+                print('Training k = {0}'.format(k))
+                kNN = KnnClassifier(k=k, input_dim=train_set.data[0].shape[0], num_classes=num_classes)
+                kNN.train(data=train_set.data, labels=train_set.label)
+
+                accuracy = Accuracy()
+
+                for val_set in validation_bg:
+                    val_prediction = kNN.predict(data=val_set.data)
+                    accuracy.update(prediction=val_prediction, target=val_set.label)
+                    
+                print(accuracy)
+
+                if accuracy > best_accuracy:
+                    best_accuracy = accuracy
+                    best_k = k
+            
+            print('best k = {0} with VALIDATION {1}'.format(best_k, best_accuracy))
+
+            kNN = KnnClassifier(k=best_k, input_dim=train_set.data[0].shape[0], num_classes=num_classes)
             kNN.train(data=train_set.data, labels=train_set.label)
 
-            accuracy = Accuracy()
+            accuracy.reset()
 
-            for val_set in validation_bg:
-                val_prediction = kNN.predict(data=val_set.data)
-                accuracy.update(prediction=val_prediction, target=val_set.label)
-                
-            print(accuracy)
+            for test_set in test_bg:
+                test_prediction = kNN.predict(data=test_set.data)
+                accuracy.update(prediction=test_prediction, target=test_set.label)
 
-            if accuracy > best_accuracy:
-                best_accuracy = accuracy
-                best_k = k
-        
-        print('best k = {0} with VALIDATION {1}'.format(best_k, best_accuracy))
-
-        kNN = KnnClassifier(k=best_k, input_dim=train_set.data[0].shape[0], num_classes=num_classes)
-        kNN.train(data=train_set.data, labels=train_set.label)
-
-        accuracy.reset()
-
-        for test_set in test_bg:
-            test_prediction = kNN.predict(data=test_set.data)
-            accuracy.update(prediction=test_prediction, target=test_set.label)
-
-        print('best k = {0} with TESTING {1}'.format(best_k, accuracy))
+            print('best k = {0} with TESTING {1}'.format(best_k, accuracy))
+            '''

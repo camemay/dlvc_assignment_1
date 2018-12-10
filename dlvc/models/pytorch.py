@@ -4,6 +4,7 @@ from ..model import Model
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 import pdb
 
 class CnnClassifier(Model):
@@ -38,12 +39,14 @@ class CnnClassifier(Model):
         self._lr = lr
         self._wd = wd
 
-        if torch.cuda.is_available():
-            net.cuda()
-            
-        print("Cuda usage: {}".format(next(net.parameters()).is_cuda))
+        self._loss = nn.CrossEntropyLoss()
+        self._optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=wd)
 
-        pdb.set_trace()
+        #if torch.cuda.is_available():
+            #net.cuda()
+            
+        print("Cuda usage: {}".format(next(net.parameters()).is_cuda))  
+
 
     def input_shape(self) -> tuple:
         '''
@@ -75,8 +78,17 @@ class CnnClassifier(Model):
         # TODO implement
         # make sure to set the network to train() mode
         # see above comments on cpu/gpu
+        
+        data = torch.tensor(data)
+        labels = torch.tensor(labels)
 
-        pass
+        self._optimizer.zero_grad()
+
+        out = self._net(data)
+        loss_val = self._loss(out, labels)
+        loss_val.backward()
+        self._optimizer.step()
+
 
     def predict(self, data: np.ndarray) -> np.ndarray:
         '''
