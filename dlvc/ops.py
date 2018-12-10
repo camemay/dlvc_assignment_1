@@ -44,33 +44,37 @@ def hwc2chw() -> Op:
     Flip a 3D array with shape HWC to shape CHW.
     '''
 
-    # TODO implement (see np.transpose)
-
-    pass
+    def op(sample: np.ndarray) -> np.ndarray:
+        return np.transpose(sample, (2,0,1))
+    
+    return op
 
 def chw2hwc() -> Op:
     '''
     Flip a 3D array with shape CHW to HWC.
     '''
 
-    # TODO implement (see np.transpose)
-
-    pass
+    def op(sample: np.ndarray) -> np.ndarray:
+        return np.transpose(sample, (1,2,0))
+    
+    return op
 
 def add(val: float) -> Op:
     '''
     Add a scalar value to all array elements.
     '''
 
-    # TODO implement
-
-    pass
+    def op(sample: np.ndarray) -> np.ndarray:
+        return sample + val
+    
+    return op
 
 def mul(val: float) -> Op:
     '''
     Multiply all array elements by the given scalar.
     '''
 
-    # TODO implement
-
-    pass
+    def op(sample: np.ndarray) -> np.ndarray:
+        return sample * val
+    
+    return op
