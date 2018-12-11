@@ -8,6 +8,7 @@ if __name__ == '__main__':
     from dlvc.test import Accuracy
     import numpy as np
     import pdb
+    import time
 
     import torch.nn as nn
     import torch.nn.functional as F
@@ -68,8 +69,8 @@ if __name__ == '__main__':
     num_batches = 128
     in_shape=tuple((num_batches, 3, 32,32))
 
-    training_bg = BatchGenerator(dataset=training, num=num_batches, shuffle=False, op=op)
-    validation_bg = BatchGenerator(dataset=validation, num=num_batches, shuffle=False, op=op)
+    training_bg = BatchGenerator(dataset=training, num=num_batches, shuffle=True, op=op)
+    validation_bg = BatchGenerator(dataset=validation, num=num_batches, shuffle=True, op=op)
     #test_bg = BatchGenerator(dataset=test, num=len(test), shuffle=False, op=op)
     
     num_classes = training.num_classes()
@@ -78,43 +79,27 @@ if __name__ == '__main__':
 
     clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.05, wd=0.1)
     
-    for epoch in range(0,101):
+    for epoch in range(1,101):
         
+        start = time.time()        
+        losses = []
+
         for train_set in training_bg:
 
             # There is an ERRRROR in Train!!!! 
-            #loss = clf.train(data=train_set.data, labels=train_set.label)
-            
-            '''
-            accuracy = Accuracy()
-            
-            for k in k_values:
-                print('Training k = {0}'.format(k))
-                kNN = KnnClassifier(k=k, input_dim=train_set.data[0].shape[0], num_classes=num_classes)
-                kNN.train(data=train_set.data, labels=train_set.label)
+            loss = clf.train(data=train_set.data, labels=train_set.label)            
+            losses.append(loss)
 
-                accuracy = Accuracy()
+        accuracy = Accuracy()
 
-                for val_set in validation_bg:
-                    val_prediction = kNN.predict(data=val_set.data)
-                    accuracy.update(prediction=val_prediction, target=val_set.label)
-                    
-                print(accuracy)
+        for val_set in validation_bg:
+            val_prediction = clf.predict(data=val_set.data)
+            accuracy.update(prediction=val_prediction, target=val_set.label)
 
-                if accuracy > best_accuracy:
-                    best_accuracy = accuracy
-                    best_k = k
-            
-            print('best k = {0} with VALIDATION {1}'.format(best_k, best_accuracy))
+        stop = time.time()
+        losses = np.asarray(losses)
+        print("epoch {}".format(epoch))
+        print("   train loss: {:.3f} +- {:.3f}".format(np.mean(losses), np.std(losses)))
+        print("   val acc:    {:.3f}".format(accuracy.accuracy()))    
 
-            kNN = KnnClassifier(k=best_k, input_dim=train_set.data[0].shape[0], num_classes=num_classes)
-            kNN.train(data=train_set.data, labels=train_set.label)
-
-            accuracy.reset()
-
-            for test_set in test_bg:
-                test_prediction = kNN.predict(data=test_set.data)
-                accuracy.update(prediction=test_prediction, target=test_set.label)
-
-            print('best k = {0} with TESTING {1}'.format(best_k, accuracy))
-            '''
+       

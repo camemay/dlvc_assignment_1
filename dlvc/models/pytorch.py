@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+import torch.nn.functional as F
 import pdb
 
 class CnnClassifier(Model):
@@ -33,17 +34,23 @@ class CnnClassifier(Model):
         # do termine this, check the type of (one of the) parameters, which can be obtained via parameters() (there is an is_cuda flag).
         # you will want to initialize the optimizer and loss function here. note that pytorch's cross-entropy loss includes normalization so no softmax is required
 
+        if torch.cuda.is_available():
+             self._cuda = True
+             self._cuda_device = torch.device(0)
+             net.cuda()
+        
+        else:
+            self._cuda = False
+            self._cuda_device = None
+        
         self._net = net
         self._input_shape = input_shape
         self._num_classes = num_classes
         self._lr = lr
-        self._wd = wd
+        self._wd = wd        
 
         self._loss = nn.CrossEntropyLoss()
-        self._optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=wd)
-
-        #if torch.cuda.is_available():
-            #net.cuda()
+        self._optimizer = torch.optim.Adam(self._net.parameters(), lr=self._lr, weight_decay=self._wd)        
             
         print("Cuda usage: {}".format(next(net.parameters()).is_cuda))  
 
@@ -78,9 +85,16 @@ class CnnClassifier(Model):
         # TODO implement
         # make sure to set the network to train() mode
         # see above comments on cpu/gpu
-        
-        data = torch.tensor(data)
-        labels = torch.tensor(labels)
+
+        self._net.train()
+
+        if self._cuda:
+            data = torch.tensor(data, device=self._cuda_device)
+            labels = torch.tensor(labels, dtype=torch.int64, device=self._cuda_device)
+
+        else:
+            data = torch.tensor(data)
+            labels = torch.tensor(labels, dtype=torch.int64)
 
         self._optimizer.zero_grad()
 
@@ -88,6 +102,8 @@ class CnnClassifier(Model):
         loss_val = self._loss(out, labels)
         loss_val.backward()
         self._optimizer.step()
+
+        return loss_val.item()
 
 
     def predict(self, data: np.ndarray) -> np.ndarray:
@@ -106,4 +122,10 @@ class CnnClassifier(Model):
         # make sure to set the network to eval() mode
         # see above comments on cpu/gpu
 
-        pass
+        data = torch.tensor(data, device=self._cuda_device)     
+
+        self._net.eval()
+        out = self._net(data)
+        prob = F.softmax(out, dim=1)
+
+        return prob.cpu().detach().numpy()
