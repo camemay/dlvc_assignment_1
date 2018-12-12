@@ -77,7 +77,7 @@ if __name__ == '__main__':
     net = Net()
     # model = model.cuda()
 
-    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.05, wd=0.1)
+    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.5, wd=0.00001)
     
     for epoch in range(1,101):
         

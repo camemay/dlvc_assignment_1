@@ -50,7 +50,7 @@ class CnnClassifier(Model):
         self._wd = wd        
 
         self._loss = nn.CrossEntropyLoss()
-        self._optimizer = torch.optim.Adam(self._net.parameters(), lr=self._lr, weight_decay=self._wd)        
+        self._optimizer = torch.optim.SGD(self._net.parameters(), lr=self._lr, momentum=0.9, weight_decay=self._wd)        
             
         print("Cuda usage: {}".format(next(net.parameters()).is_cuda))  
 
