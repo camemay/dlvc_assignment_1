@@ -78,7 +78,7 @@ class CnnClassifier(Model):
         Labels has shape (m,) and integral values between 0 and num_classes - 1.
         Returns the training loss.
         Raises TypeError on invalid argument types.
-        Raises ValueError on invalid argument values.
+        Raises ValueError on invalid argument values.   
         Raises RuntimeError on other errors.
         '''
 
@@ -97,11 +97,11 @@ class CnnClassifier(Model):
             labels = torch.tensor(labels, dtype=torch.int64)
 
         self._optimizer.zero_grad()
-
         out = self._net(data)
         loss_val = self._loss(out, labels)
         loss_val.backward()
         self._optimizer.step()
+
 
         return loss_val.item()
 

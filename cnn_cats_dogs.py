@@ -83,10 +83,10 @@ if __name__ == '__main__':
     net = Net()
     # model = model.cuda()
 
-    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.9, wd=0.00001)
+    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.1, wd=0.00001)
 
-    plot = vplt("Model A")
-    plot.register_scatterplot("Loss", "Epoch", "Loss")
+    #plot = vplt("Model A")
+    #plot.register_scatterplot("Loss", "Epoch", "Loss")
     
     for epoch in range(1,101):
         
@@ -110,7 +110,7 @@ if __name__ == '__main__':
         losses = np.asarray(losses)
         loss= np.mean(losses)
 
-        plot.update_scatterplot("Loss", epoch, loss)
+        #plot.update_scatterplot("Loss", epoch, loss)
         print("epoch {}".format(epoch))
         print("   train loss: {:.3f} +- {:.3f}".format(loss, np.std(losses)))
         print("   val acc:    {:.3f}".format(accuracy.accuracy()))    
