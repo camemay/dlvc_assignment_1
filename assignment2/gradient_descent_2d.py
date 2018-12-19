@@ -46,14 +46,13 @@ class Fn:
         Evaluate the function at location loc.
         Raises ValueError if loc is out of bounds.
         '''
-        print("____________________________")
-        pdb.set_trace()
-        loc1, loc2 = np.round(loc.x1), np.round(loc.x2)
+
+        loc1, loc2 = int(np.round(loc.x1)), int(np.round(loc.x2))
 
         if (loc1 >= self._fn.shape[0]) or (loc2 >= self._fn.shape[1]):
          raise ValueError()
-        print(loc1, loc2)
-        return self._fn[int(loc1), int(loc2)]
+
+        return self._fn[loc1, loc2]
 
 
 def grad(fn: Fn, loc: Vec2, eps: float) -> Vec2:
@@ -66,16 +65,15 @@ def grad(fn: Fn, loc: Vec2, eps: float) -> Vec2:
     # TODO implement one of the two versions presented in the lecture
 
     if (loc.x1 >= fn._fn.shape[0]) or (loc.x2 >= fn._fn.shape[1]):
-         raise ValueError()
+         raise ValueError()   
 
     if eps <= 0: raise ValueError    
-    grad = Vec2(None,None)
 
-    grad.x1 = (fn(Vec2(loc.x1+eps, loc.x2)-fn(Vec2(loc.x1-eps, loc.x2))))/(2*eps)
-    print("-----------------------")
-    grad.x2 = (fn(Vec2(loc.x1, loc.x2+eps)-fn(Vec2(loc.x1, loc.x2-eps))))/(2*eps)
-    print("wwwwwwwwwwwwwwwwwwww-")
-    return grad
+    x1 = (fn(Vec2(loc.x1+eps, loc.x2))-fn(Vec2(loc.x1-eps, loc.x2)))/(2*eps)
+    x2 = (fn(Vec2(loc.x1, loc.x2+eps))-fn(Vec2(loc.x1, loc.x2-eps)))/(2*eps)
+
+    return Vec2(x1,x2)
+    
 
 def add_vec2(v1: Vec2, v2:Vec2):
     return Vec2(v1.x1+v2.x1, v1.x2+v2.x2)
@@ -83,6 +81,7 @@ def add_vec2(v1: Vec2, v2:Vec2):
 
 def sub_vec2(v1: Vec2, v2:Vec2):
     return Vec2(v1.x1-v2.x1, v1.x2-v2.x2)
+
 
 def prod_vec2(vec: Vec2, sk: float):
     return Vec2(vec.x1*sk, vec.x2*sk)
@@ -99,7 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('sx1', type=float, help='Initial value of the first argument')
     parser.add_argument('sx2', type=float, help='Initial value of the second argument')
     parser.add_argument('--eps', type=float, default=1.0, help='Epsilon for computing numeric gradients')
-    parser.add_argument('--step_size', type=float, default=10.0, help='Step size')
+    parser.add_argument('--learning_rate', type=float, default=10.0, help='SGD learning rate')
     parser.add_argument('--beta', type=float, default=0, help='Beta parameter of momentum (0 = no momentum)')
     parser.add_argument('--nesterov', action='store_true', help='Use Nesterov momentum')
     args = parser.parse_args()
@@ -108,10 +107,9 @@ if __name__ == '__main__':
 
     fn = Fn(args.fpath)
     vis = fn.visualize()
-    loc = Vec2(int(args.sx1), int(args.sx2))
-    grad(fn,Vec2(int(1),int(1)), args.eps)
-    print("ENDE")
-    pdb.set_trace()
+    loc = Vec2(args.sx1, args.sx2)
+    # Grad(fn, loc, args.eps)
+
     velo = Vec2(0,0)
 
     # perform gradient descent
@@ -125,12 +123,11 @@ if __name__ == '__main__':
         fgrad = grad(fn, add_vec2(first,velo), args.eps)
 
         # get new v = beta*v - alpha*gradient(theta+v)
-        velo = sub_vec2(prod_vec2(velo, args.nesterov), prod_vec2(args.step_size,fgrad))
+        velo = sub_vec2(prod_vec2(velo, args.nesterov), prod_vec2(fgrad, args.learning_rate))
 
         # new = old + v
-        second = add_vec2(first,velo)
-
-        cv2.line(vis, tuple(first), tuple(second), color=(255,0,0))
+        second = add_vec2(first, velo)
+        cv2.line(vis, first, second, color=(255,0,0))
         cv2.imshow('Progress', vis)
         cv2.waitKey(50)  # 20 fps, tune according to your liking
 
