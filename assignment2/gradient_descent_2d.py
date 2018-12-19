@@ -121,14 +121,13 @@ if __name__ == '__main__':
 
         # calc gradient from first @ theta+v
         fgrad = grad(fn, add_vec2(first,velo), args.eps)
-
+        print(fgrad)
         # get new v = beta*v - alpha*gradient(theta+v)
         velo = sub_vec2(prod_vec2(velo, args.nesterov), prod_vec2(fgrad, args.learning_rate))
 
         # new = old + v
         second = add_vec2(first, velo)
-        cv2.line(vis, first, second, color=(255,0,0))
+        cv2.line(vis, (int(np.round(first.x1)), int(np.round(first.x2))), (int(np.round(second.x1)), int(np.round(second.x2))), color=(255,0,0), thickness = 10)
         cv2.imshow('Progress', vis)
-        cv2.waitKey(50)  # 20 fps, tune according to your liking
-
+        cv2.waitKey(20)  # 20 fps, tune according to your liking
         first = second
