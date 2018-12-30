@@ -1,12 +1,12 @@
 if __name__ == '__main__':
     from dlvc.datasets.pets import PetsDataset
     from dlvc.dataset import Subset
-    from dlvc.ops import chain, vectorize, type_cast, add, mul, hwc2chw
+    from dlvc.ops import chain, vectorize, type_cast, add, mul, hwc2chw, hflip
     from dlvc.batches import BatchGenerator
     from dlvc.models.knn import KnnClassifier
     from dlvc.models.pytorch import CnnClassifier
     from dlvc.test import Accuracy
-    from dlvc.visualize import Plot as vplt
+    #from dlvc.visualize import Plot as vplt
     import numpy as np
     import pdb
     import time

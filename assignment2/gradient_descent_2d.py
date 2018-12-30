@@ -27,6 +27,7 @@ class Fn:
         self._fn = self._fn.astype(np.float32)
         self._fn /= (2**16-1)
 
+
     def visualize(self) -> np.ndarray:
         '''
         Return a visualization as a color image.
@@ -63,15 +64,16 @@ def grad(fn: Fn, loc: Vec2, eps: float) -> Vec2:
     '''
     
     # TODO implement one of the two versions presented in the lecture
-
     if (loc.x1 >= fn._fn.shape[0]) or (loc.x2 >= fn._fn.shape[1]):
          raise ValueError()   
 
     if eps <= 0: raise ValueError    
-
+    #pdb.set_trace()
     x1 = (fn(Vec2(loc.x1+eps, loc.x2))-fn(Vec2(loc.x1-eps, loc.x2)))/(2*eps)
     x2 = (fn(Vec2(loc.x1, loc.x2+eps))-fn(Vec2(loc.x1, loc.x2-eps)))/(2*eps)
 
+    #m = np.sqrt(x1**2 + x2**2)
+    #uvec = Vec2(x1/m, x2/m)
     return Vec2(x1,x2)
     
 
@@ -108,26 +110,31 @@ if __name__ == '__main__':
     fn = Fn(args.fpath)
     vis = fn.visualize()
     loc = Vec2(args.sx1, args.sx2)
-    # Grad(fn, loc, args.eps)
 
     velo = Vec2(0,0)
 
     # perform gradient descent
-    first = loc
+
     while True:
         # TODO implement normal gradient descent, with momentum, and with nesterov momentum depending on the arguments (see lecture 4 slides)
         # visualize each iteration by drawing on vis using e.g. cv2.line()
         # break out of loop once done
-
+        print("-------------------------------")
         # calc gradient from first @ theta+v
-        fgrad = grad(fn, add_vec2(first,velo), args.eps)
-        print(fgrad)
-        # get new v = beta*v - alpha*gradient(theta+v)
-        velo = sub_vec2(prod_vec2(velo, args.nesterov), prod_vec2(fgrad, args.learning_rate))
 
+        fgrad = grad(fn, add_vec2(loc,velo), args.eps)
+        #pdb.set_trace()
+        print("grad: ",fgrad)
+        # get new v = beta*v - alpha*gradient(theta+v)
+        velo = sub_vec2(prod_vec2(velo, args.beta), prod_vec2(fgrad, args.learning_rate))
+        #print("v: ",velo)
         # new = old + v
-        second = add_vec2(first, velo)
-        cv2.line(vis, (int(np.round(first.x1)), int(np.round(first.x2))), (int(np.round(second.x1)), int(np.round(second.x2))), color=(255,0,0), thickness = 10)
+        loc_next = add_vec2(loc, velo)
+        print(loc)
+        print(loc_next)
+        cv2.line(vis, (int(np.round(loc.x1)), int(np.round(loc.x2))), (int(np.round(loc_next.x1)), int(np.round(loc_next.x2))), color=(255,0,0), thickness = 5)
+        cv2.line(vis, (int(np.round(400)), int(np.round(400))), (int(np.round(400+1000000*fgrad.x1)), int(np.round(400+1000000*fgrad.x2))), color=(200,100,0), thickness = 8)
+
         cv2.imshow('Progress', vis)
-        cv2.waitKey(20)  # 20 fps, tune according to your liking
-        first = second
+        cv2.waitKey(50)  # 20 fps, tune according to your liking
+        loc=loc_next
