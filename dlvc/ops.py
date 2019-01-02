@@ -93,6 +93,22 @@ def hflip() -> Op:
     
     return op
 
+def blur() -> Op:
+    '''
+    Blurs arrays with shape HWC horizontally with a probability of 0.5.
+    '''
+
+    def op(sample: np.ndarray) -> np.ndarray:   
+
+        if random.randrange(0,100,1) < 50:    
+            return cv2.GaussianBlur(img, (3,3), cv2.BORDER_DEFAULT)
+
+        else:
+            return sample
+    
+    return op
+
+
 def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     '''
     Extract a square random crop of size sz from arrays with shape HWC.
@@ -121,6 +137,5 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
         sample = sample[randx:randx+sz, randy:randy+sz,:] 
 
         return sample
-        
 
     return Op
