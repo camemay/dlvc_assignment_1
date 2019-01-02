@@ -101,9 +101,26 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     Raises ValueError if sz exceeds the array width/height after padding.
     '''
 
-    # TODO implement
-    # https://docs.scipy.org/doc/numpy-1.15.1/reference/generated/numpy.pad.html will be helpful
+    def op(sample: np.ndarray) -> np.ndarray:       
 
-    def op(sample: np.ndarray) -> np.ndarray:        
-    
-    return op
+        if pad > 0:
+            sample_pad = np.ndarray((sample.shape[0]+pad*2, sample.shape[1]+pad*2, sample.shape[2]))
+            sample_pad[:,:,0] = np.pad(sample[:,:,0], pad_width=pad, mode=pad_mode)
+            sample_pad[:,:,1] = np.pad(sample[:,:,1], pad_width=pad, mode=pad_mode)
+            sample_pad[:,:,2] = np.pad(sample[:,:,2], pad_width=pad, mode=pad_mode)
+
+            sample =  sample_pad.astype(np.uint8)
+
+        if sz > sample.shape[0] or sz > sample.shape[1]:
+            raise ValueError("Crop size of {} is bigger than padded image of shape {}.".format(sz, sample.shape))
+
+        valid_start = (sample.shape[0]-sz, sample.shape[1]-sz)
+        randx = np.random.randint(0,valid_start[0]+1)
+        randy = np.random.randint(0,valid_start[1]+1)
+
+        sample = sample[randx:randx+sz, randy:randy+sz,:] 
+
+        return sample
+        
+
+    return Op
