@@ -1,6 +1,7 @@
 
 import numpy as np
 import random
+import cv2
 
 from typing import List, Callable
 
@@ -101,7 +102,7 @@ def blur() -> Op:
     def op(sample: np.ndarray) -> np.ndarray:   
 
         if random.randrange(0,100,1) < 50:    
-            return cv2.GaussianBlur(img, (3,3), cv2.BORDER_DEFAULT)
+            return cv2.GaussianBlur(sample, (3,3), cv2.BORDER_DEFAULT)
 
         else:
             return sample
@@ -138,4 +139,25 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
 
         return sample
 
-    return Op
+    return op
+
+def resize(sz: int) -> Op:
+    '''
+    Resize image to sz by zero padding
+    '''
+
+    def op(sample: np.ndarray) -> np.ndarray:       
+
+       
+        pad = int((sz - sample.shape[0])/2)
+        
+        sample_pad = np.ndarray((sample.shape[0]+pad*2, sample.shape[1]+pad*2, sample.shape[2]))
+        sample_pad[:,:,0] = np.pad(sample[:,:,0], pad_width=pad, mode="constant", constant_values=0)
+        sample_pad[:,:,1] = np.pad(sample[:,:,1], pad_width=pad, mode="constant", constant_values=0)
+        sample_pad[:,:,2] = np.pad(sample[:,:,2], pad_width=pad, mode="constant", constant_values=0)
+
+        sample =  sample_pad.astype(np.uint8)
+      
+        return sample
+
+    return op

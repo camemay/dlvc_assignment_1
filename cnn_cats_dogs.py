@@ -1,7 +1,7 @@
 if __name__ == '__main__':
     from dlvc.datasets.pets import PetsDataset
     from dlvc.dataset import Subset
-    from dlvc.ops import chain, vectorize, type_cast, add, mul, hwc2chw, hflip
+    from dlvc.ops import chain, vectorize, type_cast, add, mul, hwc2chw, hflip, rcrop, blur, resize
     from dlvc.batches import BatchGenerator
     from dlvc.models.knn import KnnClassifier
     from dlvc.models.pytorch import CnnClassifier
@@ -15,6 +15,7 @@ if __name__ == '__main__':
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
+    import torchvision
 
     class Net(nn.Module):
 
@@ -28,8 +29,12 @@ if __name__ == '__main__':
 
             self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
 
+            self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+
+            self.dropout = nn.Dropout(0.5)
+
             # an affine operation: y = Wx + b
-            self.fc1 = nn.Linear(32*8*8, 120)
+            self.fc1 = nn.Linear(64*4*4, 120)
             self.fc2 = nn.Linear(120, 64)
             self.fc3 = nn.Linear(64, 2)
 
@@ -40,6 +45,7 @@ if __name__ == '__main__':
 
             #Size changes from (16, 32, 32) to (16, 16, 16)
             x = self.pool(x)
+            
 
             #Size changes from (16, 16, 16) to (32, 16, 16)
             x = F.relu(self.conv2(x))
@@ -47,13 +53,23 @@ if __name__ == '__main__':
             #Size changes from (32, 16, 16) to (32, 8, 8)
             x = self.pool(x)
 
+            
+
+            #Size changes from (32, 8, 8) to (64, 8, 8)
+            x = F.relu(self.conv3(x))
+
+            #Size changes from (64, 8, 8) to (64, 4, 4)
+            x = self.pool(x)
+
+            x = self.dropout(x)
+
             #Reshape data to input to the input layer of the neural net
-            #Size changes from (64, 16, 16) to (1, 16384)
+            #Size changes from (32, 8, 8) to (1, 2048)
             #Recall that the -1 infers this dimension from the other given dimension
-            x = x.view(-1, 32 * 8 *8)
+            x = x.view(-1, 64 * 4 * 4)
 
             #Computes the activation of the first fully connected layer
-            #Size changes from (1, 16384) to (1, 64)
+            #Size changes from (1, 2084) to (1, 64)
             x = F.relu(self.fc1(x))
 
             #Computes the activation of the first fully connected layer
@@ -71,6 +87,10 @@ if __name__ == '__main__':
     test = PetsDataset(dataset_path, Subset.TEST)
     
     op = chain([
+            #blur(),
+            #hflip(),
+            #rcrop(32,5,"constant"),
+            resize(244),
             type_cast(np.float32),
             add(-127.5),
             mul(1/127.5),
@@ -85,10 +105,21 @@ if __name__ == '__main__':
     test_bg = BatchGenerator(dataset=test, num=len(test), shuffle=True, op=op)
     
     num_classes = training.num_classes()
-    net = Net()
-    # model = model.cuda()
 
-    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.01, wd=0.00001)
+    '''
+    transfer learning
+    '''
+    net = torchvision.models.resnet18(pretrained=True)
+    for param in net.parameters():
+        param.requires_grad = False
+
+    net.fc = nn.Linear(2048,2)
+    net = net.cuda()
+    
+    # if not transfer learning:
+    # net = Net()   
+
+    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.01, wd=0.000)
 
     acc_best = [-1, -1]
 
