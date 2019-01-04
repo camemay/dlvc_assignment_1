@@ -50,7 +50,7 @@ class CnnClassifier(Model):
         self._wd = wd        
 
         self._loss = nn.CrossEntropyLoss()
-        self._optimizer = torch.optim.SGD(self._net.parameters(), lr=self._lr, momentum=0.9, weight_decay=self._wd)        
+        self._optimizer = torch.optim.SGD(self._net.parameters(), lr=self._lr, momentum=0.9, weight_decay=self._wd, nesterov=True)        
             
         print("Cuda usage: {}".format(next(net.parameters()).is_cuda))  
 
@@ -86,7 +86,7 @@ class CnnClassifier(Model):
         # make sure to set the network to train() mode
         # see above comments on cpu/gpu
 
-        self._net.train()
+        self._net.train(True)
 
         if self._cuda:
             data = torch.tensor(data, device=self._cuda_device)
@@ -101,7 +101,6 @@ class CnnClassifier(Model):
         loss_val = self._loss(out, labels)
         loss_val.backward()
         self._optimizer.step()
-
 
         return loss_val.item()
 

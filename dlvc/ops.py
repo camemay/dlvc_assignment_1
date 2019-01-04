@@ -148,13 +148,12 @@ def resize(sz: int) -> Op:
 
     def op(sample: np.ndarray) -> np.ndarray:       
 
-       
-        pad = int((sz - sample.shape[0])/2)
         
-        sample_pad = np.ndarray((sample.shape[0]+pad*2, sample.shape[1]+pad*2, sample.shape[2]))
-        sample_pad[:,:,0] = np.pad(sample[:,:,0], pad_width=pad, mode="constant", constant_values=0)
-        sample_pad[:,:,1] = np.pad(sample[:,:,1], pad_width=pad, mode="constant", constant_values=0)
-        sample_pad[:,:,2] = np.pad(sample[:,:,2], pad_width=pad, mode="constant", constant_values=0)
+        
+        sample_pad = np.ndarray((sz, sz, sample.shape[2]))
+        sample_pad[:,:,0] = cv2.resize(sample[:,:,0], dsize=(sz, sz), interpolation=cv2.INTER_CUBIC)
+        sample_pad[:,:,1] = cv2.resize(sample[:,:,1], dsize=(sz, sz), interpolation=cv2.INTER_CUBIC)
+        sample_pad[:,:,2] = cv2.resize(sample[:,:,2], dsize=(sz, sz), interpolation=cv2.INTER_CUBIC)
 
         sample =  sample_pad.astype(np.uint8)
       

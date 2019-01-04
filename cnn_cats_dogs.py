@@ -17,51 +17,58 @@ if __name__ == '__main__':
     import torch.nn.functional as F
     import torchvision
 
+    import cv2
+
     class Net(nn.Module):
 
         def __init__(self):
             super(Net, self).__init__()
             # 3 input image channels, 18 output channels, 5x5 square convolution
             # kernel
-            self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1)
+            self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1)            
             
             self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
 
+            self.batch1 = nn.BatchNorm2d(16)
+
             self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
+
+            self.batch2 = nn.BatchNorm2d(32)
 
             self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
 
-            self.dropout = nn.Dropout(0.5)
+            
 
             # an affine operation: y = Wx + b
-            self.fc1 = nn.Linear(64*4*4, 120)
-            self.fc2 = nn.Linear(120, 64)
+            self.fc1 = nn.Linear(64*4*4, 128)
+            self.dropout = nn.Dropout(0.3)
+            self.fc2 = nn.Linear(128, 64)
             self.fc3 = nn.Linear(64, 2)
 
         def forward(self, x):
             #Computes the activation of the first convolution
             #Size changes from (3, 32, 32) to (16, 32, 32)
+
             x = F.relu(self.conv1(x))
 
             #Size changes from (16, 32, 32) to (16, 16, 16)
-            x = self.pool(x)
-            
+            x = self.pool(x)   
+
+            #x = self.batch1(x)       
 
             #Size changes from (16, 16, 16) to (32, 16, 16)
             x = F.relu(self.conv2(x))
 
-            #Size changes from (32, 16, 16) to (32, 8, 8)
-            x = self.pool(x)
+            #x = self.batch2(x) 
 
-            
+            #Size changes from (32, 16, 16) to (32, 8, 8)
+            x = self.pool(x)  
 
             #Size changes from (32, 8, 8) to (64, 8, 8)
             x = F.relu(self.conv3(x))
 
             #Size changes from (64, 8, 8) to (64, 4, 4)
-            x = self.pool(x)
-
-            x = self.dropout(x)
+            x = self.pool(x)          
 
             #Reshape data to input to the input layer of the neural net
             #Size changes from (32, 8, 8) to (1, 2048)
@@ -72,11 +79,13 @@ if __name__ == '__main__':
             #Size changes from (1, 2084) to (1, 64)
             x = F.relu(self.fc1(x))
 
+            #x = self.dropout(x)           
+
             #Computes the activation of the first fully connected layer
             #Size changes from (1, 64) to (1, 2)
             x = F.relu(self.fc2(x))
 
-            x = F.relu(self.fc3(x))
+            x = self.fc3(x)
 
             return x
 
@@ -97,12 +106,20 @@ if __name__ == '__main__':
             hwc2chw(),
         ])
 
+    op_val = chain([
+            resize(244),
+            type_cast(np.float32),
+            add(-127.5),
+            mul(1/127.5),
+            hwc2chw(),
+        ])
+    
     num_batches = 128
     in_shape=tuple((num_batches, 3, 32,32))
 
     training_bg = BatchGenerator(dataset=training, num=num_batches, shuffle=True, op=op)
-    validation_bg = BatchGenerator(dataset=validation, num=num_batches, shuffle=True, op=op)
-    test_bg = BatchGenerator(dataset=test, num=len(test), shuffle=True, op=op)
+    validation_bg = BatchGenerator(dataset=validation, num=num_batches, shuffle=True, op=op_val)
+    test_bg = BatchGenerator(dataset=test, num=len(test), shuffle=True, op=op_val)
     
     num_classes = training.num_classes()
 
@@ -110,25 +127,28 @@ if __name__ == '__main__':
     transfer learning
     '''
     net = torchvision.models.resnet18(pretrained=True)
+
     for param in net.parameters():
         param.requires_grad = False
 
-    net.fc = nn.Linear(2048,2)
-    net = net.cuda()
-    
-    # if not transfer learning:
-    # net = Net()   
+    num_ftrs = net.fc.in_features
 
-    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.01, wd=0.000)
+    net.fc = nn.Linear(2048, 2)
+    net = net.cuda()
+
+    # if not transfer learning:
+    #net = Net()   
+
+    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.01, wd=0.0001)
 
     acc_best = [-1, -1]
 
     #plot = vplt("Model A")
     #plot.register_scatterplot("Loss", "Epoch", "Loss")
-    
+    totstart = time.time()
     for epoch in range(1,101):
         
-        start = time.time()        
+        ep_start = time.time()        
         losses = []
 
         for train_set in training_bg:
@@ -147,16 +167,18 @@ if __name__ == '__main__':
             acc_best[0] = accuracy.accuracy()
             acc_best[1] = epoch
 
-        stop = time.time()
+        ep_stop = time.time()
         losses = np.asarray(losses)
-        loss= np.mean(losses)
+        loss_mean= np.mean(losses)
 
         #plot.update_scatterplot("Loss", epoch, loss)
-        print("epoch {}".format(epoch))
-        print("   train loss: {:.3f} +- {:.3f}".format(loss, np.std(losses)))
+        print("epoch {} ({})".format(epoch, epstop-epstart))
+        print("   train loss: {:.3f} +- {:.3f}".format(loss_mean, np.std(losses)))
         print("   val acc:    {:.3f}".format(accuracy.accuracy()))    
-
+    
+    totstop = time.time()
     print("Best Accuracy of {} at epoch {}".format(acc_best[0], acc_best[1]))
+    print("Training duration: {}".format(totstop-totstart))
     print("Applying test-set...")
 
     final_clf = CnnClassifier(net=torch.load(os.path.join(os.getcwd(), "best_model.pth")),input_shape=in_shape, num_classes=num_classes, lr=0.01, wd=0.00001)
