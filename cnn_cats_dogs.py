@@ -148,7 +148,7 @@ if __name__ == '__main__':
     totstart = time.time()
     for epoch in range(1,101):
         
-        ep_start = time.time()        
+        epstart = time.time()        
         losses = []
 
         for train_set in training_bg:
@@ -167,7 +167,7 @@ if __name__ == '__main__':
             acc_best[0] = accuracy.accuracy()
             acc_best[1] = epoch
 
-        ep_stop = time.time()
+        epstop = time.time()
         losses = np.asarray(losses)
         loss_mean= np.mean(losses)
 
