@@ -126,20 +126,22 @@ if __name__ == '__main__':
     '''
     transfer learning
     '''
-    net = torchvision.models.resnet18(pretrained=True)
+    net = torchvision.models.densenet121(pretrained=True)
 
+    # Freeze parameters so we don't backprop through them
     for param in net.parameters():
         param.requires_grad = False
-
-    num_ftrs = net.fc.in_features
-
-    net.fc = nn.Linear(2048, 2)
+        
+    net.classifier = nn.Sequential(nn.Linear(1024, 256),
+                                    nn.ReLU(),
+                                    nn.Dropout(0.2),
+                                    nn.Linear(256, 2))
     net = net.cuda()
 
     # if not transfer learning:
     #net = Net()   
 
-    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.01, wd=0.0001)
+    clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.001, wd=0.0001)
 
     acc_best = [-1, -1]
 
@@ -172,13 +174,13 @@ if __name__ == '__main__':
         loss_mean= np.mean(losses)
 
         #plot.update_scatterplot("Loss", epoch, loss)
-        print("epoch {} ({})".format(epoch, epstop-epstart))
+        print("epoch {} ({:.3} s)".format(epoch, epstop-epstart))
         print("   train loss: {:.3f} +- {:.3f}".format(loss_mean, np.std(losses)))
         print("   val acc:    {:.3f}".format(accuracy.accuracy()))    
     
     totstop = time.time()
     print("Best Accuracy of {} at epoch {}".format(acc_best[0], acc_best[1]))
-    print("Training duration: {}".format(totstop-totstart))
+    print("Training duration: {:.3} min".format((totstop-totstart)/60))
     print("Applying test-set...")
 
     final_clf = CnnClassifier(net=torch.load(os.path.join(os.getcwd(), "best_model.pth")),input_shape=in_shape, num_classes=num_classes, lr=0.01, wd=0.00001)
