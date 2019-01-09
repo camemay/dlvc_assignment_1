@@ -97,8 +97,8 @@ if __name__ == '__main__':
     
     op = chain([
             #blur(),
-            #hflip(),
-            #rcrop(32,5,"constant"),
+            hflip(),
+            rcrop(32,4,"constant"),
             resize(244),
             type_cast(np.float32),
             add(-127.5),
@@ -114,7 +114,7 @@ if __name__ == '__main__':
             hwc2chw(),
         ])
     
-    num_batches = 128
+    num_batches = 32
     in_shape=tuple((num_batches, 3, 32,32))
 
     training_bg = BatchGenerator(dataset=training, num=num_batches, shuffle=True, op=op)
@@ -128,14 +128,14 @@ if __name__ == '__main__':
     '''
     net = torchvision.models.densenet121(pretrained=True)
 
-    # Freeze parameters so we don't backprop through them
-    for param in net.parameters():
-        param.requires_grad = False
+    # #Freeze parameters so we don't backprop through them
+    # for param in net.parameters():
+    #     param.requires_grad = False
         
-    net.classifier = nn.Sequential(nn.Linear(1024, 256),
-                                    nn.ReLU(),
-                                    nn.Dropout(0.2),
-                                    nn.Linear(256, 2))
+    # net.classifier = nn.Sequential(nn.Linear(1024, 256),
+    #                                 nn.ReLU(),
+    #                                 nn.Dropout(0.2),
+    #                                 nn.Linear(256, 2))
     net = net.cuda()
 
     # if not transfer learning:

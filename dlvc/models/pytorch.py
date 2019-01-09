@@ -34,14 +34,14 @@ class CnnClassifier(Model):
         # do termine this, check the type of (one of the) parameters, which can be obtained via parameters() (there is an is_cuda flag).
         # you will want to initialize the optimizer and loss function here. note that pytorch's cross-entropy loss includes normalization so no softmax is required
 
-        if torch.cuda.is_available():
-             self._cuda = True
-             self._cuda_device = torch.device(0)
-             net.cuda()
+        # if torch.cuda.is_available():
+        #      self._cuda = True
+        #      self._cuda_device = torch.device(0)
+        #      net.cuda()
         
-        else:
-            self._cuda = False
-            self._cuda_device = None
+        # else:
+        self._cuda = False
+        self._cuda_device = None
         
         self._net = net
         self._input_shape = input_shape
@@ -88,13 +88,13 @@ class CnnClassifier(Model):
 
         self._net.train(True)
 
-        if self._cuda:
-            data = torch.tensor(data, device=self._cuda_device)
-            labels = torch.tensor(labels, dtype=torch.int64, device=self._cuda_device)
+        # if self._cuda:
+        #     data = torch.tensor(data, device=self._cuda_device)
+        #     labels = torch.tensor(labels, dtype=torch.int64, device=self._cuda_device)
 
-        else:
-            data = torch.tensor(data)
-            labels = torch.tensor(labels, dtype=torch.int64)
+        # else:
+        data = torch.tensor(data)
+        labels = torch.tensor(labels, dtype=torch.int64)
 
         self._optimizer.zero_grad()
         out = self._net(data)
@@ -120,11 +120,11 @@ class CnnClassifier(Model):
         # pass the network's predictions through a nn.Softmax layer to obtain softmax class scores
         # make sure to set the network to eval() mode
         # see above comments on cpu/gpu
+        with torch.no_grad():
+            data = torch.tensor(data, device=self._cuda_device)     
 
-        data = torch.tensor(data, device=self._cuda_device)     
+            self._net.eval()
+            out = self._net(data)
+            prob = F.softmax(out, dim=1)
 
-        self._net.eval()
-        out = self._net(data)
-        prob = F.softmax(out, dim=1)
-
-        return prob.cpu().detach().numpy()
+            return prob.cpu().detach().numpy()
