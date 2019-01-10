@@ -90,7 +90,7 @@ if __name__ == '__main__':
             return x
 
 
-    dataset_path = r'C:\Users\gallm\Documents\GitHub\cifar-10-batches-py'
+    dataset_path = 'cifar-10-batches-py'
     training = PetsDataset(dataset_path, Subset.TRAINING)
     validation = PetsDataset(dataset_path, Subset.VALIDATION)
     test = PetsDataset(dataset_path, Subset.TEST)
