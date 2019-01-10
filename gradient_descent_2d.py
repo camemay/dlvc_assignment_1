@@ -66,31 +66,21 @@ def grad(fn: Fn, loc: Vec2, eps: float) -> Vec2:
     if (loc.x1 >= fn._fn.shape[0]) or (loc.x2 >= fn._fn.shape[1]):
          raise ValueError()   
 
-    if eps <= 0: raise ValueError    
+    if eps <= 0: raise ValueError  
+
     x1 = (fn(Vec2(loc.x1+eps, loc.x2))-fn(Vec2(loc.x1-eps, loc.x2)))/(2*eps)
-
-    # x1 = fn(Vec2(loc.x1+eps, loc.x2)) - fn(loc)
-    # x1 = x1 / eps
-
-    # x2 = fn(Vec2(loc.x1, loc.x2+eps)) - fn(loc)
-    # x2 = x2 / eps
     x2 = (fn(Vec2(loc.x1, loc.x2+eps))-fn(Vec2(loc.x1, loc.x2-eps)))/(2*eps)
 
     return Vec2(x1,x2)
-    
 
 def add_vec2(v1: Vec2, v2:Vec2):
     return Vec2(v1.x1+v2.x1, v1.x2+v2.x2)
 
-
 def sub_vec2(v1: Vec2, v2:Vec2):
-    # return Vec2(v1.x1-v2.x1, v1.x2-v2.x2)
-    return Vec2(v2.x1-v1.x1, v2.x2-v1.x2)
-
+    return Vec2(v1.x1-v2.x1, v1.x2-v2.x2)
 
 def prod_vec2(vec: Vec2, sk: float):
     return Vec2(vec.x1*sk, vec.x2*sk)
-
 
 if __name__ == '__main__':
     # parse args
@@ -113,35 +103,26 @@ if __name__ == '__main__':
 
     velocity = Vec2(0, 0)
 
-    cnt = 0
     while True:
         # TODO implement normal gradient descent, with momentum, and with nesterov momentum depending on the arguments (see lecture 4 slides)
         # visualize each iteration by drawing on vis using e.g. cv2.line()
         # break out of loop once done
 
+        fgrad = grad(fn, loc, args.eps)
+
         if args.nesterov:
-            fgrad = grad(fn, loc, args.eps)
-            velocity = sub_vec2(prod_vec2(fgrad, args.learning_rate), prod_vec2(velocity, args.beta))
+            velocity = sub_vec2(prod_vec2(velocity, args.beta), prod_vec2(fgrad, args.learning_rate))
             loc_next = add_vec2(loc, velocity)
         else:
-            print('no nesterov')
-            fgrad = grad(fn, loc, args.eps)
             velocity = prod_vec2(fgrad, args.learning_rate)
-            loc_next = sub_vec2(velocity, loc)
+            loc_next = sub_vec2(loc, velocity)
 
         break_criteria = np.sqrt(sum(np.square([velocity.x1, velocity.x2])))
-        print(break_criteria)
         if break_criteria < 0.01:
             break
-
-        print(fgrad)
-        print(velocity)
-        print(loc_next)
-        print('-----------------')
 
         cv2.line(vis, (int(loc.x2), int(loc.x1)), (int(loc_next.x2), int(loc_next.x1)), color=(255,0,0), thickness=2)
         cv2.imshow('Progress', vis)
         cv2.waitKey(50)  # 20 fps, tune according to your liking
 
         loc = loc_next
-        cnt = cnt + 1
