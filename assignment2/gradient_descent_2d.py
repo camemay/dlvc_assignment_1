@@ -119,22 +119,20 @@ if __name__ == '__main__':
         # TODO implement normal gradient descent, with momentum, and with nesterov momentum depending on the arguments (see lecture 4 slides)
         # visualize each iteration by drawing on vis using e.g. cv2.line()
         # break out of loop once done
-        print("-------------------------------")
+       
         # calc gradient from first @ theta+v
 
         fgrad = grad(fn, add_vec2(loc,velo), args.eps)
-        #pdb.set_trace()
-        print("grad: ",fgrad)
+
         # get new v = beta*v - alpha*gradient(theta+v)
         velo = sub_vec2(prod_vec2(velo, args.beta), prod_vec2(fgrad, args.learning_rate))
-        #print("v: ",velo)
+
         # new = old + v
         loc_next = add_vec2(loc, velo)
-        print(loc)
-        print(loc_next)
+
         cv2.line(vis, (int(np.round(loc.x1)), int(np.round(loc.x2))), (int(np.round(loc_next.x1)), int(np.round(loc_next.x2))), color=(255,0,0), thickness = 5)
-        cv2.line(vis, (int(np.round(400)), int(np.round(400))), (int(np.round(400+1000000*fgrad.x1)), int(np.round(400+1000000*fgrad.x2))), color=(200,100,0), thickness = 8)
+        #cv2.line(vis, (int(np.round(400)), int(np.round(400))), (int(np.round(400+1000000*fgrad.x1)), int(np.round(400+1000000*fgrad.x2))), color=(200,100,0), thickness = 8)
 
         cv2.imshow('Progress', vis)
-        cv2.waitKey(50)  # 20 fps, tune according to your liking
+        cv2.waitKey(1)  # 20 fps, tune according to your liking
         loc=loc_next
