@@ -119,18 +119,25 @@ if __name__ == '__main__':
         # visualize each iteration by drawing on vis using e.g. cv2.line()
         # break out of loop once done
 
-        # calc gradient from first @ theta+v
+        if args.nesterov:
+            fgrad = grad(fn, loc, args.eps)
+            velocity = sub_vec2(prod_vec2(fgrad, args.learning_rate), prod_vec2(velocity, args.beta))
+            loc_next = add_vec2(loc, velocity)
+        else:
+            print('no nesterov')
+            fgrad = grad(fn, loc, args.eps)
+            velocity = prod_vec2(fgrad, args.learning_rate)
+            loc_next = sub_vec2(velocity, loc)
 
-        fgrad = grad(fn, add_vec2(loc,velo), args.eps)
+        break_criteria = np.sqrt(sum(np.square([velocity.x1, velocity.x2])))
+        print(break_criteria)
+        if break_criteria < 0.01:
+            break
 
-        # get new v = beta*v - alpha*gradient(theta+v)
-        velo = sub_vec2(prod_vec2(velo, args.beta), prod_vec2(fgrad, args.learning_rate))
-
-        # new = old + v
-        loc_next = add_vec2(loc, velo)
-
-        cv2.line(vis, (int(np.round(loc.x1)), int(np.round(loc.x2))), (int(np.round(loc_next.x1)), int(np.round(loc_next.x2))), color=(255,0,0), thickness = 5)
-        #cv2.line(vis, (int(np.round(400)), int(np.round(400))), (int(np.round(400+1000000*fgrad.x1)), int(np.round(400+1000000*fgrad.x2))), color=(200,100,0), thickness = 8)
+        print(fgrad)
+        print(velocity)
+        print(loc_next)
+        print('-----------------')
 
         cv2.line(vis, (int(loc.x2), int(loc.x1)), (int(loc_next.x2), int(loc_next.x1)), color=(255,0,0), thickness=2)
         cv2.imshow('Progress', vis)
