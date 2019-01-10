@@ -23,8 +23,10 @@ if __name__ == '__main__':
 
         def __init__(self):
             super(Net, self).__init__()
-            # 3 input image channels, 18 output channels, 5x5 square convolution
-            # kernel
+            '''
+            3 input image channels, 18 output channels, 5x5 square convolution
+            kernel
+            '''
             self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1)            
             
             self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
@@ -39,50 +41,70 @@ if __name__ == '__main__':
 
             
 
-            # an affine operation: y = Wx + b
+            '''
+            an affine operation: y = Wx + b
+            '''
             self.fc1 = nn.Linear(64*4*4, 128)
             self.dropout = nn.Dropout(0.3)
             self.fc2 = nn.Linear(128, 64)
             self.fc3 = nn.Linear(64, 2)
 
         def forward(self, x):
-            #Computes the activation of the first convolution
-            #Size changes from (3, 32, 32) to (16, 32, 32)
+            '''
+            Computes the activation of the first convolution
+            Size changes from (3, 32, 32) to (16, 32, 32)
+            '''
 
             x = F.relu(self.conv1(x))
 
-            #Size changes from (16, 32, 32) to (16, 16, 16)
+            '''
+            Size changes from (16, 32, 32) to (16, 16, 16)
+            '''
             x = self.pool(x)   
 
             #x = self.batch1(x)       
 
-            #Size changes from (16, 16, 16) to (32, 16, 16)
+            '''
+            Size changes from (16, 16, 16) to (32, 16, 16)
+            '''
             x = F.relu(self.conv2(x))
 
             #x = self.batch2(x) 
 
-            #Size changes from (32, 16, 16) to (32, 8, 8)
+            ''' 
+            Size changes from (32, 16, 16) to (32, 8, 8)
+            '''
             x = self.pool(x)  
 
-            #Size changes from (32, 8, 8) to (64, 8, 8)
+            '''
+            Size changes from (32, 8, 8) to (64, 8, 8)
+            '''
             x = F.relu(self.conv3(x))
 
-            #Size changes from (64, 8, 8) to (64, 4, 4)
+            '''
+            Size changes from (64, 8, 8) to (64, 4, 4)
+            '''
             x = self.pool(x)          
 
-            #Reshape data to input to the input layer of the neural net
-            #Size changes from (32, 8, 8) to (1, 2048)
-            #Recall that the -1 infers this dimension from the other given dimension
+            '''
+            Reshape data to input to the input layer of the neural net
+            Size changes from (32, 8, 8) to (1, 2048)
+            Recall that the -1 infers this dimension from the other given dimension
+            '''
             x = x.view(-1, 64 * 4 * 4)
 
-            #Computes the activation of the first fully connected layer
-            #Size changes from (1, 2084) to (1, 64)
+            '''
+            Computes the activation of the first fully connected layer
+            Size changes from (1, 2084) to (1, 64)
+            '''
             x = F.relu(self.fc1(x))
 
             #x = self.dropout(x)           
 
-            #Computes the activation of the first fully connected layer
-            #Size changes from (1, 64) to (1, 2)
+            '''
+            Computes the activation of the first fully connected layer
+            Size changes from (1, 64) to (1, 2)
+            '''
             x = F.relu(self.fc2(x))
 
             x = self.fc3(x)
@@ -128,7 +150,9 @@ if __name__ == '__main__':
     '''
     net = torchvision.models.densenet121(pretrained=True)
 
-    # #Freeze parameters so we don't backprop through them
+    '''
+    Freeze parameters so we don't backprop through them
+    '''
     # for param in net.parameters():
     #     param.requires_grad = False
         
@@ -138,7 +162,9 @@ if __name__ == '__main__':
     #                                 nn.Linear(256, 2))
     net = net.cuda()
 
-    # if not transfer learning:
+    '''
+    if not transfer learning:
+    '''
     #net = Net()   
 
     clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.001, wd=0.0001)
