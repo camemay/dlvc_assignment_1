@@ -63,7 +63,7 @@ class BatchGenerator:
         '''
         Iterate over the wrapped dataset, returning the data as batches.
         '''
-        indeces = list(range(0, len(self.__dataset)))
+        indeces = np.array(range(0, len(self.__dataset)))
 
         if self.__shuffle:
             random.shuffle(indeces)
