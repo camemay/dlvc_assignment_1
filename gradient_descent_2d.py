@@ -109,7 +109,6 @@ if __name__ == '__main__':
         
         fgrad = grad(fn, add_vec2(loc, velocity), args.eps)
 
-        # update direction
         if args.nesterov:
             velocity = sub_vec2(prod_vec2(velocity, args.beta), prod_vec2(fgrad, args.learning_rate))
             loc_next = add_vec2(loc, velocity)
