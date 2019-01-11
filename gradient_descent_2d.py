@@ -118,7 +118,6 @@ if __name__ == '__main__':
 
         # break if gradient is close to zero
         break_criteria = np.sqrt(sum(np.square([fgrad.x1, fgrad.x2])))
-        print(break_criteria)
         if break_criteria < 0.0001:
             break
 
