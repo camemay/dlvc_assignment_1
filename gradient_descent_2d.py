@@ -1,7 +1,6 @@
 
 import cv2
 import numpy as np
-
 import os
 import time
 from collections import namedtuple
@@ -74,12 +73,15 @@ def grad(fn: Fn, loc: Vec2, eps: float) -> Vec2:
     return Vec2(x1,x2)
 
 def add_vec2(v1: Vec2, v2:Vec2):
+    ''' Add two Vec2 '''
     return Vec2(v1.x1+v2.x1, v1.x2+v2.x2)
 
 def sub_vec2(v1: Vec2, v2:Vec2):
+    ''' Substract v2 from v1 (Vev2) '''
     return Vec2(v1.x1-v2.x1, v1.x2-v2.x2)
 
 def prod_vec2(vec: Vec2, sk: float):
+    ''' product of Vec2 with scalar '''
     return Vec2(vec.x1*sk, vec.x2*sk)
 
 if __name__ == '__main__':
@@ -96,20 +98,24 @@ if __name__ == '__main__':
     parser.add_argument('--beta', type=float, default=0, help='Beta parameter of momentum (0 = no momentum)')
     parser.add_argument('--nesterov', action='store_true', help='Use Nesterov momentum')
     args = parser.parse_args()
-
+    
+    # Initialize
+    # loss fct
     fn = Fn(args.fpath)
+
+    # visualisation
     vis = fn.visualize()
+
+    # initial point
     loc = Vec2(args.sx1, args.sx2)
 
     velocity = Vec2(0, 0)
 
     while True:
-        # TODO implement normal gradient descent, with momentum, and with nesterov momentum depending on the arguments (see lecture 4 slides)
-        # visualize each iteration by drawing on vis using e.g. cv2.line()
-        # break out of loop once done
-
+        
         fgrad = grad(fn, loc, args.eps)
 
+        # update direction
         if args.nesterov:
             velocity = sub_vec2(prod_vec2(velocity, args.beta), prod_vec2(fgrad, args.learning_rate))
             loc_next = add_vec2(loc, velocity)
@@ -117,12 +123,13 @@ if __name__ == '__main__':
             velocity = prod_vec2(fgrad, args.learning_rate)
             loc_next = sub_vec2(loc, velocity)
 
+        # break if gradient is close to zero
         break_criteria = np.sqrt(sum(np.square([velocity.x1, velocity.x2])))
         if break_criteria < 0.01:
             break
 
         cv2.line(vis, (int(loc.x2), int(loc.x1)), (int(loc_next.x2), int(loc_next.x1)), color=(255,0,0), thickness=2)
         cv2.imshow('Progress', vis)
-        cv2.waitKey(50)  # 20 fps, tune according to your liking
+        cv2.waitKey(1)  # 20 fps, tune according to your liking
 
         loc = loc_next

@@ -27,21 +27,15 @@ class CnnClassifier(Model):
         wd: weight decay to use for training.
         '''
 
-        # TODO implement
-
-        # inside the train() and predict() functions you will need to know whether the network itself
-        # runs on the cpu or on a gpu, and in the latter case transfer input/output tensors via cuda() and cpu().
-        # do termine this, check the type of (one of the) parameters, which can be obtained via parameters() (there is an is_cuda flag).
-        # you will want to initialize the optimizer and loss function here. note that pytorch's cross-entropy loss includes normalization so no softmax is required
-
-        # if torch.cuda.is_available():
-        #      self._cuda = True
-        #      self._cuda_device = torch.device(0)
-        #      net.cuda()
+        # Setup cuda mode if cuda is available
+        if torch.cuda.is_available():
+             self._cuda = True
+             self._cuda_device = torch.device(0)
+             net.cuda()
         
-        # else:
-        self._cuda = False
-        self._cuda_device = None
+        else:
+            self._cuda = False
+            self._cuda_device = None
         
         self._net = net
         self._input_shape = input_shape
@@ -82,21 +76,20 @@ class CnnClassifier(Model):
         Raises RuntimeError on other errors.
         '''
 
-        # TODO implement
-        # make sure to set the network to train() mode
-        # see above comments on cpu/gpu
-
         self._net.train(True)
 
-        # if self._cuda:
-        #     data = torch.tensor(data, device=self._cuda_device)
-        #     labels = torch.tensor(labels, dtype=torch.int64, device=self._cuda_device)
+        # Transfer arrays into (cuda) tensors
+        if self._cuda:
+            data = torch.tensor(data, device=self._cuda_device)
+            labels = torch.tensor(labels, dtype=torch.int64, device=self._cuda_device)
 
-        # else:
-        data = torch.tensor(data)
-        labels = torch.tensor(labels, dtype=torch.int64)
+        else:
+            data = torch.tensor(data)
+            labels = torch.tensor(labels, dtype=torch.int64)
 
+        # Reset optimizer
         self._optimizer.zero_grad()
+
         out = self._net(data)
         loss_val = self._loss(out, labels)
         loss_val.backward()
@@ -115,13 +108,14 @@ class CnnClassifier(Model):
         Raises RuntimeError on other errors.
         '''
 
-        # TODO implement
-
-        # pass the network's predictions through a nn.Softmax layer to obtain softmax class scores
-        # make sure to set the network to eval() mode
-        # see above comments on cpu/gpu
         with torch.no_grad():
-            data = torch.tensor(data, device=self._cuda_device)     
+
+            # Transfer arrays into (cuda) tensors
+            if self._cuda:
+                data = torch.tensor(data, device=self._cuda_device)           
+
+            else:
+                data = torch.tensor(data) 
 
             self._net.eval()
             out = self._net(data)

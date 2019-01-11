@@ -86,9 +86,11 @@ def hflip() -> Op:
     Flip arrays with shape HWC horizontally with a probability of 0.5.
     '''
 
-    def op(sample: np.ndarray) -> np.ndarray:    
+    def op(sample: np.ndarray) -> np.ndarray:  
+
         if random.randrange(0,100,1) < 50:    
             return np.flip(sample,1)
+
         else:
             return sample
     
@@ -96,7 +98,7 @@ def hflip() -> Op:
 
 def blur() -> Op:
     '''
-    Blurs arrays with shape HWC horizontally with a probability of 0.5.
+    Blurs arrays with shape HWC with a probability of 0.5.
     '''
 
     def op(sample: np.ndarray) -> np.ndarray:   
@@ -121,20 +123,26 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     def op(sample: np.ndarray) -> np.ndarray:       
 
         if pad > 0:
+
+            # pad each layer individually 
             sample_pad = np.ndarray((sample.shape[0]+pad*2, sample.shape[1]+pad*2, sample.shape[2]))
             sample_pad[:,:,0] = np.pad(sample[:,:,0], pad_width=pad, mode=pad_mode)
             sample_pad[:,:,1] = np.pad(sample[:,:,1], pad_width=pad, mode=pad_mode)
             sample_pad[:,:,2] = np.pad(sample[:,:,2], pad_width=pad, mode=pad_mode)
 
-            sample =  sample_pad.astype(np.uint8)
+            sample = sample_pad.astype(np.uint8)
 
         if sz > sample.shape[0] or sz > sample.shape[1]:
             raise ValueError("Crop size of {} is bigger than padded image of shape {}.".format(sz, sample.shape))
 
+        # set are of valid start points for the right upper corner
         valid_start = (sample.shape[0]-sz, sample.shape[1]-sz)
+
+        # find random point
         randx = np.random.randint(0,valid_start[0]+1)
         randy = np.random.randint(0,valid_start[1]+1)
 
+        # crop
         sample = sample[randx:randx+sz, randy:randy+sz,:] 
 
         return sample
@@ -143,12 +151,10 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
 
 def resize(sz: int) -> Op:
     '''
-    Resize image to sz by zero padding
+    Resize image to shape sz x sz 
     '''
 
-    def op(sample: np.ndarray) -> np.ndarray:       
-
-        
+    def op(sample: np.ndarray) -> np.ndarray:        
         
         sample_pad = np.ndarray((sz, sz, sample.shape[2]))
         sample_pad[:,:,0] = cv2.resize(sample[:,:,0], dsize=(sz, sz), interpolation=cv2.INTER_CUBIC)
