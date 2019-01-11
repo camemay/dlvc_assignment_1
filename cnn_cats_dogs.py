@@ -111,7 +111,7 @@ if __name__ == '__main__':
             hwc2chw(),
         ])
     
-    num_batches = 1
+    num_batches = 128
     in_shape=tuple((num_batches, 3, 32,32))
 
     training_bg = BatchGenerator(dataset=training, num=num_batches, shuffle=True, op=op)
@@ -141,7 +141,6 @@ if __name__ == '__main__':
         epstart = time.time()        
         losses = []
 
-        # train
         for train_set in training_bg:
 
             loss = clf.train(data=train_set.data, labels=train_set.label)            
@@ -149,7 +148,6 @@ if __name__ == '__main__':
         
         accuracy = Accuracy()
 
-        # validate
         for val_set in validation_bg:
             val_prediction = clf.predict(data=val_set.data)
             accuracy.update(prediction=val_prediction, target=val_set.label)
@@ -163,7 +161,6 @@ if __name__ == '__main__':
         losses = np.asarray(losses)
         loss_mean= np.mean(losses)
 
-        #plot.update_scatterplot("Loss", epoch, loss)
         print("epoch {} ({:.3} s)".format(epoch, epstop-epstart))
         print("   train loss: {:.3f} +- {:.3f}".format(loss_mean, np.std(losses)))
         print("   val acc:    {:.3f}".format(accuracy.accuracy()))    
@@ -172,13 +169,11 @@ if __name__ == '__main__':
     print("Best Accuracy of {} at epoch {}".format(acc_best[0], acc_best[1]))
     print("Training duration: {:.3} min".format((totstop-totstart)/60))
 
-    # Test
     print("Applying test-set...")
 
     final_clf = CnnClassifier(net=torch.load(os.path.join(os.getcwd(), "best_model.pth")),input_shape=in_shape, num_classes=num_classes, lr=0.01, wd=0.00001)
     accuracy2 = Accuracy()
 
-    # only one batch for training
     for test_set in test_bg:
         test_prediction = final_clf.predict(data=test_set.data)
         accuracy2.update(prediction=test_prediction, target=test_set.label)

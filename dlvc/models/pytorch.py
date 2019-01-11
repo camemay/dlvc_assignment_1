@@ -76,27 +76,40 @@ class CnnClassifier(Model):
         Raises RuntimeError on other errors.
         '''
 
-        self._net.train(True)
+        if not isinstance(data, np.ndarray) or not isinstance(labels, np.ndarray):
+            raise TypeError
 
-        # Transfer arrays into (cuda) tensors
-        if self._cuda:
-            data = torch.tensor(data, device=self._cuda_device)
-            labels = torch.tensor(labels, dtype=torch.int64, device=self._cuda_device)
+        if any(labels > self._num_classes - 1) or any(labels < 0):
+            raise ValueError
 
-        else:
-            data = torch.tensor(data)
-            labels = torch.tensor(labels, dtype=torch.int64)
+        if data.shape[0] != labels.shape[0]:
+            raise ValueError
 
-        # Reset optimizer
-        self._optimizer.zero_grad()
+        if data.dtype is not np.dtype(np.float32):
+            raise ValueError
 
-        out = self._net(data)
-        loss_val = self._loss(out, labels)
-        loss_val.backward()
-        self._optimizer.step()
+        try:
+            self._net.train(True)
 
-        return loss_val.item()
+            if self._cuda:
+                data = torch.tensor(data, device=self._cuda_device)
+                labels = torch.tensor(labels, dtype=torch.int64, device=self._cuda_device)
 
+            else:
+                data = torch.tensor(data)
+                labels = torch.tensor(labels, dtype=torch.int64)
+
+            # Reset optimizer
+            self._optimizer.zero_grad()
+
+            out = self._net(data)
+            loss_val = self._loss(out, labels)
+            loss_val.backward()
+            self._optimizer.step()
+
+            return loss_val.item()
+        except:
+            raise RuntimeError
 
     def predict(self, data: np.ndarray) -> np.ndarray:
         '''
@@ -108,17 +121,26 @@ class CnnClassifier(Model):
         Raises RuntimeError on other errors.
         '''
 
-        with torch.no_grad():
+        if not isinstance(data, np.ndarray):
+            raise TypeError
 
-            # Transfer arrays into (cuda) tensors
-            if self._cuda:
-                data = torch.tensor(data, device=self._cuda_device)           
+        if data.dtype is not np.dtype(np.float32):
+            raise ValueError
 
-            else:
-                data = torch.tensor(data) 
+        try:
+            with torch.no_grad():
 
-            self._net.eval()
-            out = self._net(data)
-            prob = F.softmax(out, dim=1)
+                # Transfer arrays into (cuda) tensors
+                if self._cuda:
+                    data = torch.tensor(data, device=self._cuda_device)           
 
-            return prob.cpu().detach().numpy()
+                else:
+                    data = torch.tensor(data) 
+
+                self._net.eval()
+                out = self._net(data)
+                prob = F.softmax(out, dim=1)
+
+                return prob.cpu().detach().numpy()
+        except:
+            raise RuntimeError
