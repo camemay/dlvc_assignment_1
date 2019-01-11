@@ -99,21 +99,15 @@ if __name__ == '__main__':
     parser.add_argument('--nesterov', action='store_true', help='Use Nesterov momentum')
     args = parser.parse_args()
     
-    # Initialize
-    # loss fct
     fn = Fn(args.fpath)
-
-    # visualisation
     vis = fn.visualize()
-
-    # initial point
     loc = Vec2(args.sx1, args.sx2)
 
     velocity = Vec2(0, 0)
 
     while True:
         
-        fgrad = grad(fn, loc, args.eps)
+        fgrad = grad(fn, add_vec2(loc, velocity), args.eps)
 
         # update direction
         if args.nesterov:
@@ -124,8 +118,9 @@ if __name__ == '__main__':
             loc_next = sub_vec2(loc, velocity)
 
         # break if gradient is close to zero
-        break_criteria = np.sqrt(sum(np.square([velocity.x1, velocity.x2])))
-        if break_criteria < 0.01:
+        break_criteria = np.sqrt(sum(np.square([fgrad.x1, fgrad.x2])))
+        print(break_criteria)
+        if break_criteria < 0.0001:
             break
 
         cv2.line(vis, (int(loc.x2), int(loc.x1)), (int(loc_next.x2), int(loc_next.x1)), color=(255,0,0), thickness=2)
