@@ -96,6 +96,7 @@ if __name__ == '__main__':
             # blur(), # additional augmentation
             hflip(),
             rcrop(32,4,"constant"),
+            resize(244), # reshape input img for densenet
             type_cast(np.float32),
             add(-127.5),
             mul(1/127.5),
@@ -103,6 +104,7 @@ if __name__ == '__main__':
         ])
 
     op_val = chain([
+            resize(244), # reshape input img for densenet
             type_cast(np.float32),
             add(-127.5),
             mul(1/127.5),
@@ -118,7 +120,15 @@ if __name__ == '__main__':
     
     num_classes = training.num_classes()
 
-    net = Net()   
+    '''
+    Use transfer learning for best model
+    '''
+    net = torchvision.models.densenet121(pretrained=True)
+
+    '''
+    if not transfer learning uncomment
+    '''
+    #net = Net()   
 
     clf = CnnClassifier(net=net, input_shape=in_shape, num_classes=num_classes, lr=0.01, wd=0.0001)
 
